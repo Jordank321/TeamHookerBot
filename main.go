@@ -16,9 +16,9 @@ func main() {
 	mux.HandleFunc("/", httpHandler)
 
 	certManager := autocert.Manager{
-		Prompt: autocert.AcceptTOS,
-		Cache:  autocert.DirCache("certs"),
-		HostPolicy: autocert.HostWhitelist("jordankelwick.com", "www.jordankelwick.com")
+		Prompt:     autocert.AcceptTOS,
+		Cache:      autocert.DirCache("certs"),
+		HostPolicy: autocert.HostWhitelist("jordankelwick.com", "www.jordankelwick.com"),
 	}
 
 	server := &http.Server{
