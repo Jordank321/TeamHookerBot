@@ -74,6 +74,7 @@ func handler(w http.ResponseWriter, lreq *http.Request) {
 		if !authenticated {
 			w.WriteHeader(http.StatusUnauthorized)
 			w.Write([]byte("Invalid Authentication"))
+			return
 		}
 	}
 
