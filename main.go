@@ -4,21 +4,56 @@ import (
 	"log"
 	"net/http"
 
+	"github.com/jsgoecke/go-wit"
+
+	"github.com/Jordank321/TeamHookerBot/commands"
+
 	"golang.org/x/crypto/acme/autocert"
 
+	. "github.com/ahmetb/go-linq"
+	"github.com/peterhellberg/giphy"
 	"github.com/spf13/viper"
 )
 
+func (w webHook) OnMessage(req Request) (Response, error) {
+	intents := commands.GetWitIntent(req.Text)
+	if len(intents) == 0 {
+		return BuildTextResponse("Hello " + req.FromUser.Name), nil
+	}
+	From(intents).Sort(func(i interface{}, j interface{}) bool {
+		return i.(wit.Outcome).Confidence < j.(wit.Outcome).Confidence
+	}).ToSlice(&intents)
+
+	bestGuess := intents[0]
+
+	hasRandomGifRequest := From(bestGuess.Entities).Contains(func(entity interface{}) bool {
+		if entity.(KeyValue).Key.(string) == "intent" {
+			return From(entity.(KeyValue).Value.([]wit.MessageEntity)).Contains(func(messageEntity interface{}) bool {
+				return (*messageEntity.(wit.MessageEntity).Value).(string) == "GIF_RANDOM"
+			})
+		}
+		return false
+	})
+	if hasRandomGifRequest {
+		g := giphy.DefaultClient
+		resp, err := g.Random(nil)
+		panicErr(err)
+		return BuildTextResponse(resp.Data.Caption + " - " + resp.Data.URL), nil
+	}
+	return BuildTextResponse("Idk, want some cookies?"), nil
+}
+
 func main() {
 	viper.AutomaticEnv()
-	key := viper.GetString("TEAMS_WEBHOOK_KEY")
 
-	if len(key) == 0 {
-		log.Panic("It helps when you set a key in the env as TEAMS_WEBHOOK_KEY")
-	}
+	teamsKey := getCheckSetting("TEAMS_WEBHOOK_KEY")
+	//giphyKey := getCheckSetting("GIPHY_API_KEY")
+	witAiKey := getCheckSetting("WIT_AI_KEY")
+
+	commands.SetWitToken(witAiKey)
 
 	mux := http.NewServeMux()
-	httpHandler := NewHandler(true, key, webHook{})
+	httpHandler := NewHandler(true, teamsKey, webHook{})
 	mux.HandleFunc("/", httpHandler)
 
 	certManager := autocert.Manager{
@@ -41,6 +76,10 @@ func main() {
 type webHook struct {
 }
 
-func (w webHook) OnMessage(req Request) (Response, error) {
-	return BuildTextResponse("Hello " + req.FromUser.Name), nil
+func getCheckSetting(name string) string {
+	value := viper.GetString(name)
+	if len(value) == 0 {
+		log.Panicf("It helps when you set a key in the env as %s", name)
+	}
+	return value
 }
