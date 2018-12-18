@@ -71,14 +71,14 @@ func main() {
 	}
 
 	server := &http.Server{
-		Addr:      ":80",
+		Addr:      ":https",
 		Handler:   mux,
 		TLSConfig: certManager.TLSConfig(),
 	}
 
-	//go http.ListenAndServe(":80", certManager.HTTPHandler(nil))
-	//err := server.ListenAndServeTLS("", "")
-	err := server.ListenAndServe()
+	go http.ListenAndServe(":80", certManager.HTTPHandler(nil))
+	err := server.ListenAndServeTLS("", "")
+	//err := server.ListenAndServe()
 	panicErr(err)
 }
 
