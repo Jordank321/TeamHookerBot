@@ -34,9 +34,9 @@ func (w webHook) OnMessage(req Request) (Response, error) {
 	data, _ = json.MarshalIndent(bestGuess, "", "    ")
 	log.Println(string(data[:]))
 
-	hasRandomGifRequest := From(bestGuess.Entities).Contains(func(entity interface{}) bool {
+	hasRandomGifRequest := From(bestGuess.Entities).AnyWith(func(entity interface{}) bool {
 		if entity.(KeyValue).Key.(string) == "intent" {
-			return From(entity.(KeyValue).Value.([]wit.MessageEntity)).Contains(func(messageEntity interface{}) bool {
+			return From(entity.(KeyValue).Value.([]wit.MessageEntity)).AnyWith(func(messageEntity interface{}) bool {
 				return (*messageEntity.(wit.MessageEntity).Value).(string) == "GIF_RANDOM"
 			})
 		}
@@ -71,13 +71,14 @@ func main() {
 	}
 
 	server := &http.Server{
-		Addr:      ":https",
+		Addr:      ":80",
 		Handler:   mux,
 		TLSConfig: certManager.TLSConfig(),
 	}
 
-	go http.ListenAndServe(":80", certManager.HTTPHandler(nil))
-	err := server.ListenAndServeTLS("", "")
+	//go http.ListenAndServe(":80", certManager.HTTPHandler(nil))
+	//err := server.ListenAndServeTLS("", "")
+	err := server.ListenAndServe()
 	panicErr(err)
 }
 
