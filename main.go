@@ -1,11 +1,11 @@
 package main
 
 import (
-	"crypto/tls"
 	"net/http"
 
-	"github.com/spf13/viper"
 	"golang.org/x/crypto/acme/autocert"
+
+	"github.com/spf13/viper"
 )
 
 func main() {
@@ -18,14 +18,13 @@ func main() {
 	certManager := autocert.Manager{
 		Prompt: autocert.AcceptTOS,
 		Cache:  autocert.DirCache("certs"),
+		HostPolicy: autocert.HostWhitelist("jordankelwick.com", "www.jordankelwick.com")
 	}
 
 	server := &http.Server{
-		Addr:    ":443",
-		Handler: mux,
-		TLSConfig: &tls.Config{
-			GetCertificate: certManager.GetCertificate,
-		},
+		Addr:      ":https",
+		Handler:   mux,
+		TLSConfig: certManager.TLSConfig(),
 	}
 
 	go http.ListenAndServe(":80", certManager.HTTPHandler(nil))
