@@ -74,7 +74,7 @@ func handler(w http.ResponseWriter, lreq *http.Request) {
 	if auth {
 		authenticated := authenticateRequest(bodyBytes, lreq.Header.Get("Authorization"), keyBytes)
 		if !authenticated {
-			log.Println("Request deemed as Invalid Authentication")
+			log.Println("Unauthorized request!")
 			w.WriteHeader(http.StatusUnauthorized)
 			w.Write([]byte("Invalid Authentication"))
 			return
@@ -82,14 +82,10 @@ func handler(w http.ResponseWriter, lreq *http.Request) {
 	}
 
 	var treq = Request{}
-
-	log.Print("Request body: " + string(bodyBytes))
 	err = json.NewDecoder(bytes.NewReader(bodyBytes)).Decode(&treq)
 	panicErr(err)
-
 	tresp, err := webhook.OnMessage(treq)
 	panicErr(err)
-
 	buf := new(bytes.Buffer)
 	err = json.NewEncoder(buf).Encode(tresp)
 	panicErr(err)
@@ -99,18 +95,15 @@ func handler(w http.ResponseWriter, lreq *http.Request) {
 }
 
 func authenticateRequest(body []byte, authHeader string, keyBytesLocal []byte) bool {
-	log.Printf("Authenticating auth header %s against body %s", authHeader, body)
-
 	messageMAC, _ := base64.StdEncoding.DecodeString(strings.TrimPrefix(authHeader, "HMAC "))
-
 	mac := hmac.New(sha256.New, keyBytesLocal)
 	mac.Write(body)
 	expectedMAC := mac.Sum(nil)
 	return hmac.Equal(messageMAC, expectedMAC)
 }
 
-// BuildResponse is a helper method to build a Response
-func BuildResponse(text string) Response {
+// BuildTextResponse is a helper method to build a Response
+func BuildTextResponse(text string) Response {
 	return Response{
 		Type: "message",
 		Text: text,
