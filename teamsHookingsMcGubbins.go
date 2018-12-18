@@ -72,7 +72,7 @@ func handler(w http.ResponseWriter, lreq *http.Request) {
 	panicErr(err)
 
 	if auth {
-		authenticated := authenticateRequest(bodyBytes, lreq.Header.Get("Authorization"))
+		authenticated := authenticateRequest(bodyBytes, lreq.Header.Get("Authorization"), keyBytes)
 		if !authenticated {
 			log.Println("Request deemed as Invalid Authentication")
 			w.WriteHeader(http.StatusUnauthorized)
@@ -98,12 +98,12 @@ func handler(w http.ResponseWriter, lreq *http.Request) {
 	w.Write(buf.Bytes())
 }
 
-func authenticateRequest(body []byte, authHeader string) bool {
+func authenticateRequest(body []byte, authHeader string, keyBytesLocal []byte) bool {
 	log.Printf("Authenticating auth header %s against body %s", authHeader, body)
 
 	messageMAC, _ := base64.StdEncoding.DecodeString(strings.TrimPrefix(authHeader, "HMAC "))
 
-	mac := hmac.New(sha256.New, keyBytes)
+	mac := hmac.New(sha256.New, keyBytesLocal)
 	mac.Write(body)
 	expectedMAC := mac.Sum(nil)
 	return hmac.Equal(messageMAC, expectedMAC)

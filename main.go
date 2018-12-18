@@ -1,6 +1,7 @@
 package main
 
 import (
+	"log"
 	"net/http"
 
 	"golang.org/x/crypto/acme/autocert"
@@ -10,9 +11,12 @@ import (
 
 func main() {
 	viper.AutomaticEnv()
+	key := viper.GetString("TEAMS_WEBHOOK_KEY")
+
+	log.Printf("Using the key %s", key)
 
 	mux := http.NewServeMux()
-	httpHandler := NewHandler(true, viper.GetString("TEAMS_WEBHOOK_KEY"), webHook{})
+	httpHandler := NewHandler(true, key, webHook{})
 	mux.HandleFunc("/", httpHandler)
 
 	certManager := autocert.Manager{
