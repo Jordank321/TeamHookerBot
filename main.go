@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"log"
 	"net/http"
 
@@ -17,6 +18,10 @@ import (
 
 func (w webHook) OnMessage(req Request) (Response, error) {
 	intents := commands.GetWitIntent(req.Text)
+
+	data, _ := json.MarshalIndent(intents, "", "    ")
+	log.Println(string(data[:]))
+
 	if len(intents) == 0 {
 		return BuildTextResponse("Hello " + req.FromUser.Name), nil
 	}
@@ -25,6 +30,9 @@ func (w webHook) OnMessage(req Request) (Response, error) {
 	}).ToSlice(&intents)
 
 	bestGuess := intents[0]
+
+	data, _ = json.MarshalIndent(bestGuess, "", "    ")
+	log.Println(string(data[:]))
 
 	hasRandomGifRequest := From(bestGuess.Entities).Contains(func(entity interface{}) bool {
 		if entity.(KeyValue).Key.(string) == "intent" {
