@@ -68,9 +68,11 @@ func NewHandler(authenticateRequests bool, key string, wh WebHook) func(w http.R
 }
 
 func handler(w http.ResponseWriter, lreq *http.Request) {
+	bodyBytes, err := ioutil.ReadAll(lreq.Body)
+	panicErr(err)
 
 	if auth {
-		authenticated := authenticateRequest(lreq)
+		authenticated := authenticateRequest(bodyBytes, lreq.Header.Get("Authorization"))
 		if !authenticated {
 			w.WriteHeader(http.StatusUnauthorized)
 			w.Write([]byte("Invalid Authentication"))
@@ -79,8 +81,6 @@ func handler(w http.ResponseWriter, lreq *http.Request) {
 	}
 
 	var treq = Request{}
-	bodyBytes, err := ioutil.ReadAll(lreq.Body)
-	panicErr(err)
 
 	log.Print("Request body: " + string(bodyBytes))
 	err = json.NewDecoder(bytes.NewReader(bodyBytes)).Decode(&treq)
@@ -97,14 +97,11 @@ func handler(w http.ResponseWriter, lreq *http.Request) {
 	w.Write(buf.Bytes())
 }
 
-func authenticateRequest(lreq *http.Request) bool {
-	bodyBytes, err := ioutil.ReadAll(lreq.Body)
-	panicErr(err)
-	authHeader := lreq.Header.Get("Authorization")
+func authenticateRequest(body []byte, authHeader string) bool {
 	messageMAC, _ := base64.StdEncoding.DecodeString(strings.TrimPrefix(authHeader, "HMAC "))
 
 	mac := hmac.New(sha256.New, keyBytes)
-	mac.Write(bodyBytes)
+	mac.Write(body)
 	expectedMAC := mac.Sum(nil)
 	return hmac.Equal(messageMAC, expectedMAC)
 }
