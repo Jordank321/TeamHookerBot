@@ -28,7 +28,8 @@ func main() {
 	}
 
 	go http.ListenAndServe(":80", certManager.HTTPHandler(nil))
-	server.ListenAndServeTLS("", "")
+	err := server.ListenAndServeTLS("", "")
+	panicErr(err)
 }
 
 type webHook struct {
