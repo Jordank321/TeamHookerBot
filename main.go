@@ -46,7 +46,7 @@ func (w webHook) OnMessage(req Request) (Response, error) {
 		g := giphy.DefaultClient
 		resp, err := g.Random(nil)
 		panicErr(err)
-		return BuildTextResponse(resp.Data.Caption + " - " + resp.Data.URL), nil
+		return BuildTextResponse("[Eat your heart out](" + resp.Data.URL + ")"), nil
 	}
 	return BuildTextResponse("Idk, want some cookies?"), nil
 }
