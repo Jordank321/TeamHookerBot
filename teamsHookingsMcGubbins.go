@@ -81,6 +81,7 @@ func handler(w http.ResponseWriter, lreq *http.Request) {
 	bodyBytes, err := ioutil.ReadAll(lreq.Body)
 	panicErr(err)
 
+	log.Print("Request body: " + string(bodyBytes))
 	err = json.NewDecoder(bytes.NewReader(bodyBytes)).Decode(&treq)
 	panicErr(err)
 
